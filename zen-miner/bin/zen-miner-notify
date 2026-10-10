@@ -1,0 +1,35 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# Termux Notification Manager for zen-miner
+
+if ! command -v termux-notification &>/dev/null; then
+  exit 0
+fi
+
+case "$1" in
+  start)
+    termux-notification \
+      --title "zen-miner" \
+      --content "Service started" \
+      --id 1001 \
+      --ongoing
+    ;;
+  stop)
+    termux-notification-remove 1001
+    termux-notification \
+      --title "zen-miner" \
+      --content "Service stopped" \
+      --id 1002
+    ;;
+  health)
+    termux-notification \
+      --title "zen-miner Health" \
+      --content "$2" \
+      --id 1003
+    ;;
+  error)
+    termux-notification \
+      --title "zen-miner Error" \
+      --content "$2" \
+      --id 1004
+    ;;
+esac

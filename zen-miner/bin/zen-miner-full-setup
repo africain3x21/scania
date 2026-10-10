@@ -1,0 +1,80 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# zen-miner Full Setup: Auto-start + Dashboard + Cloudflare + Notifications
+
+echo "╔════════════════════════════════════════════════════════════╗"
+echo "║         zen-miner FULL SETUP - Termux                      ║"
+echo "╚════════════════════════════════════════════════════════════╝"
+echo ""
+
+# 1. Create boot directory
+echo "[1/5] Setting up auto-start..."
+mkdir -p ~/.termux/boot
+chmod +x ~/.termux/boot/zen-miner-startup.sh
+echo "✓ Auto-start configured"
+
+# 2. Make scripts executable
+echo "[2/5] Making scripts executable..."
+chmod +x ~/zen-miner/bin/zen-miner*
+echo "✓ Scripts ready"
+
+# 3. Add to PATH
+echo "[3/5] Adding to PATH..."
+if ! grep -q "zen-miner" ~/.bashrc; then
+  cat >> ~/.bashrc <<'EOF'
+
+# zen-miner
+export PATH="$HOME/zen-miner/bin:$PATH"
+alias zen-miner-dash="zen-miner-dashboard"
+alias zen-miner-web="zen-miner-server"
+alias zen-miner-api="zen-miner-api-server"
+EOF
+  source ~/.bashrc
+  echo "✓ PATH updated"
+else
+  echo "✓ Already in PATH"
+fi
+
+# 4. Setup Termux permissions
+echo "[4/5] Setting up Termux permissions..."
+if command -v termux-setup-storage &>/dev/null; then
+  termux-setup-storage 2>/dev/null || true
+  echo "✓ Storage permissions set"
+else
+  echo "⚠ termux-setup-storage not available"
+fi
+
+# 5. Summary
+echo "[5/5] Setup complete!"
+echo ""
+echo "╔════════════════════════════════════════════════════════════╗"
+echo "║              AVAILABLE COMMANDS                            ║"
+echo "╠════════════════════════════════════════════════════════════╣"
+echo "║ Service Management:                                        ║"
+echo "║   zen-miner start/stop/restart/status/logs                ║"
+echo "║                                                            ║"
+echo "║ Dashboard (Live Monitoring):                               ║"
+echo "║   zen-miner-dashboard         (Terminal)                  ║"
+echo "║   zen-miner-web               (Web Browser on port 3000)   ║"
+echo "║   zen-miner-api-server        (REST API on port 3001)      ║"
+echo "║                                                            ║"
+echo "║ Cloud Tunnel:                                              ║"
+echo "║   zen-miner-install-cloudflare                            ║"
+echo "║                                                            ║"
+echo "║ Notifications:                                             ║"
+echo "║   zen-miner-notify start/stop/health/error                ║"
+echo "║                                                            ║"
+echo "║ Auto-Start:                                                ║"
+echo "║   Enabled on Termux boot                                  ║"
+echo "╚════════════════════════════════════════════════════════════╝"
+echo ""
+echo "Quick Start:"
+echo "  1. zen-miner start"
+echo "  2. zen-miner-dashboard (for terminal view)"
+echo "  3. zen-miner-web (for web dashboard on :3000)"
+echo ""
+echo "To enable notifications:"
+echo "  zen-miner-notify start"
+echo ""
+echo "To setup Cloudflare tunnel:"
+echo "  zen-miner-install-cloudflare"
+echo ""

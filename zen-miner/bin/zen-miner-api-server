@@ -1,0 +1,57 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# zen-miner API Server for Dashboard
+
+API_PORT=${1:-3001}
+PID_FILE="$HOME/.zen-miner.pid"
+LOG_FILE="$HOME/.logs/zen-miner.log"
+
+echo "Starting zen-miner API Server on port $API_PORT..."
+
+# Create simple API using nc (netcat)
+while true; do
+  {
+    read -r request
+    
+    if [[ $request == *"GET /api/status"* ]]; then
+      if [[ -f "$PID_FILE" ]]; then
+        pid=$(cat "$PID_FILE" 2>/dev/null)
+        if kill -0 $pid 2>/dev/null; then
+          uptime=$(ps -o etimes= -p $pid 2>/dev/null | tr -d ' ')
+          response="{\"running\": true, \"pid\": $pid, \"uptime\": $uptime}"
+        else
+          response="{\"running\": false, \"pid\": null, \"uptime\": 0}"
+        fi
+      else
+        response="{\"running\": false, \"pid\": null, \"uptime\": 0}"
+      fi
+      echo -ne "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n$response\r\n"
+      
+    elif [[ $request == *"GET /api/logs"* ]]; then
+      if [[ -f "$LOG_FILE" ]]; then
+        logs=$(tail -n 20 "$LOG_FILE" | sed 's/"/\\\"/' | tr '\n' '|')
+        response="{\"logs\": [$(echo "$logs" | sed 's/|/\", \"/g' | sed 's/$/\"/' | sed 's/^/\"/')}"
+      else
+        response="{\"logs\": []}"
+      fi
+      echo -ne "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n$response\r\n"
+      
+    elif [[ $request == *"POST /api/start"* ]]; then
+      $HOME/zen-miner/bin/zen-miner start
+      response="{\"message\": \"Started\"}"
+      echo -ne "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n$response\r\n"
+      
+    elif [[ $request == *"POST /api/stop"* ]]; then
+      $HOME/zen-miner/bin/zen-miner stop
+      response="{\"message\": \"Stopped\"}"
+      echo -ne "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n$response\r\n"
+      
+    elif [[ $request == *"POST /api/restart"* ]]; then
+      $HOME/zen-miner/bin/zen-miner restart
+      response="{\"message\": \"Restarted\"}"
+      echo -ne "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n$response\r\n"
+      
+    else
+      echo -ne "HTTP/1.1 404 Not Found\r\n\r\n404 Not Found\r\n"
+    fi
+  } | nc -l -p $API_PORT -q 1
+done

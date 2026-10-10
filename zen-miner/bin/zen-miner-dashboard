@@ -1,0 +1,111 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# zen-miner Dashboard/Monitoring
+
+PROJECT_ROOT="$HOME/zen-miner"
+LOG_FILE="$HOME/.logs/zen-miner.log"
+PID_FILE="$HOME/.zen-miner.pid"
+DASH_PORT=${1:-8080}
+
+echo "╔════════════════════════════════════════════════════════════╗"
+echo "║           ZEN-MINER DASHBOARD                              ║"
+echo "╚════════════════════════════════════════════════════════════╝"
+echo ""
+
+# Status
+echo "📊 SERVICE STATUS"
+if [[ -f "$PID_FILE" ]]; then
+  pid=$(cat "$PID_FILE" 2>/dev/null)
+  if kill -0 $pid 2>/dev/null; then
+    uptime=$(ps -o etimes= -p $pid 2>/dev/null | tr -d ' ')
+    echo "   ✓ Status: RUNNING"
+    echo "   ✓ PID: $pid"
+    echo "   ✓ Uptime: ${uptime}s"
+  else
+    echo "   ✗ Status: DEAD (PID file exists but process gone)"
+  fi
+else
+  echo "   ✗ Status: STOPPED"
+fi
+echo ""
+
+# System Info
+echo "🖥️  SYSTEM INFO"
+echo "   • Device: $(getprop ro.product.model 2>/dev/null || echo 'Unknown')"
+echo "   • Android: $(getprop ro.build.version.release 2>/dev/null || echo 'Unknown')"
+echo "   • Termux: $TERMUX_VERSION"
+echo ""
+
+# Memory
+echo "💾 MEMORY"
+mem=$(free -h 2>/dev/null | grep Mem | awk '{print $3 " / " $2}')
+echo "   • Used: $mem"
+echo ""
+
+# Logs
+echo "📝 RECENT LOGS"
+if [[ -f "$LOG_FILE" ]]; then
+  tail -n 5 "$LOG_FILE" | while read line; do
+    echo "   $line"
+  done
+else
+  echo "   No logs yet"
+fi
+echo ""
+
+# Network
+echo "🌐 NETWORK"
+if command -v curl &>/dev/null; then
+  ip=$(curl -s https://api.ipify.org 2>/dev/null || echo "Unknown")
+  echo "   • Public IP: $ip"
+else
+  echo "   • Public IP: (curl not installed)"
+fi
+echo ""
+
+# Quick Commands
+echo "⚙️  QUICK COMMANDS"
+echo "   zen-miner start    - Start service"
+echo "   zen-miner stop     - Stop service"
+echo "   zen-miner restart  - Restart service"
+echo "   zen-miner logs     - View logs"
+echo "   zen-miner-health   - Health check"
+echo ""
+
+# Live monitoring
+echo "👁️  LIVE MONITORING (5s refresh, press Ctrl+C to exit)"
+echo ""
+
+while true; do
+  clear
+  echo "╔════════════════════════════════════════════════════════════╗"
+  echo "║           ZEN-MINER LIVE DASHBOARD                          ║"
+  echo "╚════════════════════════════════════════════════════════════╝"
+  echo ""
+  echo "Time: $(date '+%Y-%m-%d %H:%M:%S')"
+  echo ""
+  
+  if [[ -f "$PID_FILE" ]]; then
+    pid=$(cat "$PID_FILE" 2>/dev/null)
+    if kill -0 $pid 2>/dev/null; then
+      echo "✓ RUNNING (PID: $pid)"
+      uptime=$(ps -o etimes= -p $pid 2>/dev/null | tr -d ' ')
+      echo "  Uptime: ${uptime}s"
+    else
+      echo "✗ PROCESS DEAD"
+    fi
+  else
+    echo "✗ STOPPED"
+  fi
+  
+  echo ""
+  echo "Last 10 logs:"
+  if [[ -f "$LOG_FILE" ]]; then
+    tail -n 10 "$LOG_FILE" | nl
+  else
+    echo "  No logs"
+  fi
+  
+  echo ""
+  echo "Press Ctrl+C to exit"
+  sleep 5
+done

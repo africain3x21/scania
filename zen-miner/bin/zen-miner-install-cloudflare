@@ -1,0 +1,54 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# Install and Setup Cloudflared Tunnel for zen-miner
+
+echo "Installing Cloudflared..."
+
+# Download cloudflared for Android
+if [[ ! -f "$HOME/bin/cloudflared" ]]; then
+  mkdir -p "$HOME/bin"
+  
+  echo "Downloading cloudflared..."
+  # For Termux/Android
+  curl -L https://github.com/cloudflare/cloudflared/releases/download/2024.9.0/cloudflared-linux-arm64 -o "$HOME/bin/cloudflared" 2>/dev/null
+  
+  if [[ ! -f "$HOME/bin/cloudflared" ]]; then
+    echo "✗ Download failed. Try manual install:"
+    echo "  pkg install cloudflared"
+    exit 1
+  fi
+  
+  chmod +x "$HOME/bin/cloudflared"
+  echo "✓ Cloudflared installed"
+else
+  echo "✓ Cloudflared already installed"
+fi
+
+# Create cloudflared config
+mkdir -p "$HOME/.config/cloudflared"
+
+cat > "$HOME/.config/cloudflared/config.yml" <<'CFCONFIG'
+tunnel: zen-miner
+credentialsFile: /data/data/com.termux/files/home/.cloudflared/zen-miner.json
+
+ingress:
+  - hostname: zen-miner.example.com
+    service: http://localhost:8080
+  - hostname: dashboard.zen-miner.example.com
+    service: http://localhost:3000
+  - service: http_status:404
+CFCONFIG
+
+echo "✓ Cloudflared config created"
+
+# Login to Cloudflare
+echo ""
+echo "Now authenticate with Cloudflare:"
+echo ""
+$HOME/bin/cloudflared tunnel login
+
+echo ""
+echo "✓ Setup complete"
+echo ""
+echo "To start the tunnel:"
+echo "  $HOME/bin/cloudflared tunnel run zen-miner"
+echo ""

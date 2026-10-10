@@ -1,0 +1,27 @@
+{
+  "app": "zen-miner",
+  "version": "2.0.0",
+  "installed_at": "2026-10-10T16:51:31Z",
+  "system": "termux",
+  "paths": {
+    "root": "/root/zen-miner",
+    "bin": "/root/zen-miner/bin",
+    "logs": "/root/zen-miner/.logs",
+    "data": "/root/zen-miner/.data"
+  },
+  "service": {
+    "name": "zen-miner",
+    "autostart": true,
+    "pid_file": "/root/zen-miner/.zen-miner.pid"
+  },
+  "integrations": {
+    "termux": true,
+    "systemd": true,
+    "settings_modal": true
+  },
+  "monitoring": {
+    "enabled": true,
+    "health_check_interval": 300,
+    "log_retention_days": 30
+  }
+}
